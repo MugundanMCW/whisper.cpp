@@ -328,21 +328,15 @@ jobs:
       - name: Clone
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
-
       - name: Fetch SDL2 and set SDL2_DIR
         run: |
           Invoke-WebRequest -Uri "https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-devel-2.28.5-VC.zip" -OutFile sdl2.zip
           Expand-Archive sdl2.zip -DestinationPath .
           echo "SDL2_DIR=$env:GITHUB_WORKSPACE/SDL2-2.28.5/cmake" >> $env:GITHUB_ENV
-      
+
       - name: Configure
         run: >
-          cmake -S . -B ./build
-          -G Ninja
-          -DCMAKE_C_COMPILER=clang-cl
-          -DCMAKE_CXX_COMPILER=clang-cl
+          cmake -S . -B ./build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
           -DBUILD_SHARED_LIBS=ON
           -DWHISPER_SDL2=ON
@@ -351,25 +345,23 @@ jobs:
           -DGGML_BACKEND_DL=ON
 
       - name: Build
-        run: |
-          cd ./build
-          msbuild ALL_BUILD.vcxproj -t:build -p:configuration=Release -p:platform=ARM64
+        run: cmake --build ./build --config Release
 
       - name: Copy SDL2.dll
-        run: copy "$env:SDL2_DIR/../lib/ARM64/SDL2.dll" build/bin/Release
+        run: copy "$env:SDL2_DIR/../lib/ARM64/SDL2.dll" build/bin
 
       - name: Pack bin artifacts
         shell: pwsh
         run: |
-          Compress-Archive -Path "build/bin/Release" -DestinationPath "whisper-bin-arm64.zip"
+          Compress-Archive -Path "build/bin" -DestinationPath "whisper-bin-woa64.zip"
 
       - name: Upload binaries
         if: ${{ needs.determine-tag.outputs.should_release == 'true' }}
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: whisper-bin-arm64.zip
-          path: whisper-bin-arm64.zip
-
+          name: whisper-bin-woa64.zip
+          path: whisper-bin-woa64.zip
+  
   windows-cublas:
     runs-on: windows-2022
     needs: determine-tag
