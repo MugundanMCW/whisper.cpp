@@ -339,7 +339,7 @@ jobs:
 
       - name: Configure
         run: >
-          cmake -S . -B ./build -A ARM64
+          cmake -S . -B ./build
           -DCMAKE_BUILD_TYPE=Release
           -DBUILD_SHARED_LIBS=ON
           -DWHISPER_SDL2=ON
