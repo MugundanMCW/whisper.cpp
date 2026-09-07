@@ -344,9 +344,6 @@ jobs:
       - name: Build
         run: cmake --build ./build --config Release
 
-      - name: Copy SDL2.dll
-        run: copy "$env:SDL2_DIR/../lib/ARM64/SDL2.dll" build/bin
-
       - name: Pack bin artifacts
         shell: pwsh
         run: |
