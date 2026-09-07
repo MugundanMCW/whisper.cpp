@@ -339,14 +339,13 @@ jobs:
 
       - name: Configure
         run: >
-          cmake -S . -B ./build
+          cmake -S . -B ./build -A ARM64
           -DCMAKE_BUILD_TYPE=Release
           -DBUILD_SHARED_LIBS=ON
           -DWHISPER_SDL2=ON
           -DGGML_NATIVE=OFF
           -DWHISPER_BUILD_IS_DEV=${{ env.WHISPER_BUILD_IS_DEV }}
           -DGGML_BACKEND_DL=ON
-          -DGGML_CPU_ALL_VARIANTS=ON
 
       - name: Build
         run: |
@@ -718,4 +717,3 @@ jobs:
                 });
               }
             }
-  
