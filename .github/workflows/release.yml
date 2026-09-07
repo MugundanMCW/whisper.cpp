@@ -320,6 +320,54 @@ jobs:
           name: whisper-blas-bin-${{ matrix.arch }}.zip
           path: whisper-blas-bin-${{ matrix.arch }}.zip
 
+  windows-arm64:
+    runs-on: windows-11-arm
+    needs: determine-tag
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2
+
+      - name: Fetch SDL2 and set SDL2_DIR
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/libsdl-org/SDL/releases/download/release-2.28.5/SDL2-devel-2.28.5-VC.zip" -OutFile sdl2.zip
+          Expand-Archive sdl2.zip -DestinationPath .
+          echo "SDL2_DIR=$env:GITHUB_WORKSPACE/SDL2-2.28.5/cmake" >> $env:GITHUB_ENV
+
+      - name: Configure
+        run: >
+          cmake -S . -B ./build -A ARM64
+          -DCMAKE_BUILD_TYPE=Release
+          -DBUILD_SHARED_LIBS=ON
+          -DWHISPER_SDL2=ON
+          -DGGML_NATIVE=OFF
+          -DWHISPER_BUILD_IS_DEV=${{ env.WHISPER_BUILD_IS_DEV }}
+          -DGGML_BACKEND_DL=ON
+          -DGGML_CPU_ALL_VARIANTS=ON
+
+      - name: Build
+        run: |
+          cd ./build
+          msbuild ALL_BUILD.vcxproj -t:build -p:configuration=Release -p:platform=ARM64
+
+      - name: Copy SDL2.dll
+        run: copy "$env:SDL2_DIR/../lib/ARM64/SDL2.dll" build/bin/Release
+
+      - name: Pack bin artifacts
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build/bin/Release" -DestinationPath "whisper-bin-arm64.zip"
+
+      - name: Upload binaries
+        if: ${{ needs.determine-tag.outputs.should_release == 'true' }}
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: whisper-bin-arm64.zip
+          path: whisper-bin-arm64.zip
+
   windows-cublas:
     runs-on: windows-2022
     needs: determine-tag
@@ -599,6 +647,7 @@ jobs:
       - ios-xcode-build
       - windows
       - windows-blas
+      - windows-arm64
       - windows-cublas
 
     steps:
@@ -669,3 +718,4 @@ jobs:
                 });
               }
             }
+  
